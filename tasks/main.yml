@@ -1,0 +1,26 @@
+---
+- yum_repository:
+    name: packages-microsoft-com-mssql-server
+    description: packages-microsoft-com-mssql-server
+    baseurl: https://packages.microsoft.com/rhel/7/mssql-server/
+    enabled: yes
+    gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+    gpgcheck: yes
+
+- yum: name=mssql-server
+
+- name: Install expect in order to use workaround below
+  yum: name=expect
+
+- shell: expect -c 'spawn /opt/mssql/lib/mssql-conf/mssql-conf.py --accept-eula set-sa-password; expect assword; send "{{sa_password}}\n"; expect assword; send "{{sa_password}}"; interact'
+
+- service: name=mssql-server state=started enabled=yes
+
+- pip: name=pymssql
+
+- service: name=firewalld state=started enabled=yes
+
+- firewalld:
+    port: 1433/tcp
+    permanent: true
+    state: enabled
