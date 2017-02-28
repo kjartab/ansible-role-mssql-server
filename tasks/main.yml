@@ -7,20 +7,26 @@
     gpgkey: https://packages.microsoft.com/keys/microsoft.asc
     gpgcheck: yes
 
-- yum: name=mssql-server
+- name: Install microsoft sql server
+  yum: name=mssql-server
 
-- name: Install expect in order to use workaround below
+- name: Install expect
   yum: name=expect
 
-- shell: expect -c 'spawn /opt/mssql/lib/mssql-conf/mssql-conf.py --accept-eula set-sa-password; expect assword; send "{{sa_password}}\n"; expect assword; send "{{sa_password}}"; interact'
+- name: Initial setup of sql server
+  shell: expect -c 'spawn /opt/mssql/lib/mssql-conf/mssql-conf.py setup; expect license; send "Yes\n"; expect password; send "{{sa_password}}\n"; expect password; send "{{sa_password}}\n"; interact'
+  ignore_errors: true
+  register: res
 
-- service: name=mssql-server state=started enabled=yes
+- debug: var=res
+  
+- name: Stop sql server if it was already running and initialized
+  service: name=mssql-server state=stopped
+  when: res.stdout.find('SQL Server is running') != -1
 
-- pip: name=pymssql
-
-- service: name=firewalld state=started enabled=yes
-
-- firewalld:
-    port: 1433/tcp
-    permanent: true
-    state: enabled
+- name: Set sql server if it was already running
+  shell: expect -c 'spawn /opt/mssql/lib/mssql-conf/mssql-conf.py set-sa-password; expect password; send "{{sa_password}}\n"; expect password; send "{{sa_password}}\n"; interact'
+  when: res.stdout.find('SQL Server is running') != -1
+    
+- name: Start sql server
+  service: name=mssql-server state=started enabled=yes
