@@ -18,16 +18,9 @@
   ignore_errors: true
   register: res
 
-- debug: var=res
-
-
 - name: Initial setup of sql server (license already accepted)
   shell: expect -c 'spawn /opt/mssql/lib/mssql-conf/mssql-conf.py setup; expect password; send "{{sa_password}}\n"; expect password; send "{{sa_password}}\n expect completed completed"; interact'
   when: res.stdout.find('password policy requirements') != -1
-  register: res2
-
-- debug: var=res2
-
   
 - name: Stop sql server if it was already running and initialized
   service: name=mssql-server state=stopped
@@ -35,11 +28,7 @@
     
 - name: Set sql server if it was already running
   shell: expect -c 'spawn /opt/mssql/lib/mssql-conf/mssql-conf.py setup; expect password; send "{{sa_password}}\n"; expect password; send "{{sa_password}}\n"; send "start\n"; expect completed; send "end\n";  interact'
-  # shell: expect -c 'spawn /opt/mssql/lib/mssql-conf/mssql-conf.py set-sa-password; expect password; send "{{sa_password}}\n"; expect password; send "{{sa_password}}\n"; interact'
   when: res.stdout.find('SQL Server is running') != -1
-  register: res3
-
-- debug: var=res3
-    
+  
 - name: Start sql server
   service: name=mssql-server state=started enabled=yes
