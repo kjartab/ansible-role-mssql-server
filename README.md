@@ -27,7 +27,7 @@ Including an example of how to use your role (for instance, with variables passe
       vars:
         sa_password: testpassworD1
       roles:
-         - { role: Norkart.sql-server }
+         - { role: Norkart.mssql-server }
 
 License
 -------
